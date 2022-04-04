@@ -6,22 +6,22 @@ import pybullet_data
 # Hit phase simulation
 STEP_RATE = 1/240.  # one spep lenght in seconds
 DURATION = 5000     # steps of simulation with given STEP_RATE
-HIT_POWER = 15000
+HIT_POWER = 20000
 
 physicsClient = p.connect(p.GUI)  # or p.DIRECT for non-graphical version
 p.setAdditionalSearchPath(pybullet_data.getDataPath())  # optionally
 print("data path: %s " % pybullet_data.getDataPath())
-# p.setGravity(0, 0, -10) gravity turns on after aiming stage
-planeId = p.loadURDF("plane.urdf")
+# p.setGravity(0, 0, -10)  # gravity turns on after aiming stage
+plane_id = p.loadURDF("plane.urdf")
 # Ball to be hit
 ballStartPos = [0, 0, 0.5]
 # ballStartOrientation = p.getQuaternionFromEuler([0, 0, 0])
-ballId = p.loadURDF("sphere2.urdf", ballStartPos, useFixedBase=1)
+ballId = p.loadURDF("sphere2.urdf", ballStartPos, useFixedBase=1, globalScaling=1)
 # Aiming pointer, that disappears with HIT button pressed
 pointStartPos = [1, -1, 0.5]
-pointerId = p.loadURDF("sphere2.urdf", pointStartPos, useFixedBase=0, globalScaling=0.1)
+pointerId = p.loadURDF("sphere2.urdf", pointStartPos, useFixedBase=0, globalScaling=0.3)
 # Ball that hits
-hammerId = p.loadURDF("sphere2.urdf", [5, -5, 0.5])
+hammerId = p.loadURDF("sphere2.urdf", [5, -5, 0.5], globalScaling=1)
 
 ballPos, ballOrn = p.getBasePositionAndOrientation(ballId)
 hammPos, hammOrn = p.getBasePositionAndOrientation(hammerId)
@@ -36,11 +36,13 @@ for i in range(DURATION):
     if hit_done == False:
         # Current position of aiming pointer (x,y,z)
         pointPos = p.getBasePositionAndOrientation(pointerId)[0]
-        # Aims gravity to ball
+
+        # Aims gravity toward ball
         ball_gravity = 350 * (np.array(ballPos) - np.array(pointPos))
         p.applyExternalForce(objectUniqueId=pointerId, linkIndex=-1,
                              forceObj=ball_gravity, posObj=ballPos, flags=p.WORLD_FRAME)
-        # Aims gravity to hammer-ball
+
+        # Aims gravity toward hammer-ball
         gem_gravity = 10 * (np.array(hammPos) - np.array(pointPos))
         p.applyExternalForce(objectUniqueId=pointerId, linkIndex=-1,
                              forceObj=gem_gravity, posObj=hammPos, flags=p.WORLD_FRAME)

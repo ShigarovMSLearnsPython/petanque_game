@@ -13,10 +13,10 @@ class Ellipse:
         self.radius_x = radius1
         self.radius_y = radius2
 
-    def isPointInside(self, point: Point) -> bool:
+    def is_point_inside(self, point: Point) -> bool:
         return (point.x - self.centre.x)**2 / self.radius_x**2 + (point.y - self.centre.y)**2 / self.radius_y**2 <= 1
 
-    def getNpoints(self, n):
+    def get_n_points(self, n):
         poins_of_ellipse = []
         step = 2*pi / n
 
@@ -27,18 +27,18 @@ class Ellipse:
 
         return poins_of_ellipse
 
-# Point
-point = Point(-15, 25)
+# # Point
+# point = Point(-1, 0)
 
-# Ellipse
-ellipse_centre_point = Point(0, 0)
-ellipse_radius_x = 1
-ellipse_radius_y = 2
-ellipse = Ellipse(ellipse_centre_point, ellipse_radius_x, ellipse_radius_y)
-
-# Check if P inside E
-print(ellipse.isPointInside(point))
+# # Ellipse
+# ellipse_centre_point = Point(0, 0)
+# ellipse_radius_x = 1
+# ellipse_radius_y = 2
+# ellipse = Ellipse(ellipse_centre_point, ellipse_radius_x, ellipse_radius_y)
+#
+# # Check if P inside E
+# print(ellipse.isPointInside(point))
 
 # Get 64 points on ellipse
-plt.scatter(*zip(*ellipse.getNpoints(64)))
-plt.show()
+# plt.scatter(*zip(*ellipse.getNpoints(64)))
+# plt.show()
