@@ -1,10 +1,11 @@
-from matplotlib import pyplot as plt
 from math import pi, sin, cos
 
+
 class Point:
-    def __init__(self, x: float, y: float):
+    def __init__(self, x: float, y: float, z: float):
         self.x = x
         self.y = y
+        self.z = z
 
 
 class Ellipse:
@@ -27,18 +28,3 @@ class Ellipse:
 
         return poins_of_ellipse
 
-# # Point
-# point = Point(-1, 0)
-
-# # Ellipse
-# ellipse_centre_point = Point(0, 0)
-# ellipse_radius_x = 1
-# ellipse_radius_y = 2
-# ellipse = Ellipse(ellipse_centre_point, ellipse_radius_x, ellipse_radius_y)
-#
-# # Check if P inside E
-# print(ellipse.isPointInside(point))
-
-# Get 64 points on ellipse
-# plt.scatter(*zip(*ellipse.getNpoints(64)))
-# plt.show()
