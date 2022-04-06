@@ -2,47 +2,46 @@ import numpy as np
 import pybullet as p
 import time
 import pybullet_data
+from setup import *
 
+# Loads ball and its physic specs
+def load_object(place, scale):
+    unique_p_id = p.loadURDF("sphere2.urdf", basePosition=place, globalScaling=scale)
+    p.changeDynamics(unique_p_id, linkIndex=-1, mass=BALL_MASS, restitution=BALL_BOUNCENES)
+    return unique_p_id
 
-class Ball:
-    def __init__(self, x, y, z, team, scale):
-        self.place = (x, y, z)
-        self.team = team
-        self.scale = scale
+# Loads world with horisontal plane and gravity
+def load_world(current_round_field):
+    physicsClient = p.connect(p.GUI)  # or p.DIRECT for non-graphical version
+    p.setAdditionalSearchPath(pybullet_data.getDataPath())  # optionally
+    print("data path: %s " % pybullet_data.getDataPath())
 
+    p.setGravity(0, 0, -9.8)
+    plane_id = p.loadURDF("plane.urdf")
+    p.changeDynamics(plane_id, linkIndex=-1, restitution=PLANE_BOUNCENESS,
+                     lateralFriction=PLANE_LAT_FRIC, rollingFriction=PLANE_ROL_FRIC)
+    # and here it loads all ball in current_round_field dictionary
+    for i in current_round_field:
+        # cochonnet always has num 1 in current_round_field
+        scale = COCHONNET_RADIUS if i == 1 else BALL_RADIUS
+        print(f'current_round_field {current_round_field[i]}')
+        load_object(current_round_field[i], scale=scale)
 
-STEP_RATE = 1/240.  # one spep lenght in seconds
-DURATION = 1000     # steps of simulation with given STEP_RATE
+# Gets coordinate of balls on field
+def get_field_data():
+    field_data = {}
+    for i in range(1, p.getNumBodies()):
+        field_data.update({i: p.getBasePositionAndOrientation(i)[0]})
+    print(f'field_data = {field_data}')
+    return field_data
 
-physicsClient = p.connect(p.GUI)  # or p.DIRECT for non-graphical version
-p.setAdditionalSearchPath(pybullet_data.getDataPath())  # optionally
-print("data path: %s " % pybullet_data.getDataPath())
-p.setGravity(0, 0, -9.8)
-plane_id = p.loadURDF("plane.urdf")
-p.changeDynamics(plane_id, linkIndex=-1, restitution=0.5, lateralFriction=0.6, rollingFriction=0)
+# Simulates fling and returns ditc of field data
+def fling_ball_simulation(ball_id, dirrection, start_time=True):
 
+    p.changeDynamics(ball_id, linkIndex=-1, mass=0.33, restitution=0.8)
 
-def load_object(ball: Ball):
-    # ball.id = p.loadURDF("sphere2.urdf", ball.place, globalScaling=ball.scale)
-    return p.loadURDF("sphere2.urdf", ball.place, globalScaling=ball.scale)
-
-
-def load_world(a):
-    for ball in a:
-        ball.id = load_object(ball)
-
-
-# def get_fling_results():
-#     pass
-
-
-def fling_ball_simulation(ball: Ball, dirrection, power, start_time=True):
-
-    # load_world(round.field)
-    ball.id = load_object(ball)
-    p.changeDynamics(ball.id, linkIndex=-1, mass=0.33, restitution=1.2)
-    force = power * np.array(dirrection)
-    p.applyExternalForce(objectUniqueId=ball.id, linkIndex=-1,
+    force = np.array(dirrection)
+    p.applyExternalForce(objectUniqueId=ball_id, linkIndex=-1,
                          forceObj=force, posObj=dirrection, flags=p.LINK_FRAME)
 
     # MAIN simulation loop
@@ -50,18 +49,14 @@ def fling_ball_simulation(ball: Ball, dirrection, power, start_time=True):
         p.stepSimulation()
 
         if start_time:
-            time.sleep(1.5)
+            time.sleep(0.7)
             start_time = False
 
         # Simulations step-rate
         time.sleep(STEP_RATE / 8)
 
-    return p.getBasePositionAndOrientation(ball.id)[0]
+    field_data = get_field_data()
 
+    # p.disconnect()
 
-# # MAIN simulation loop
-# for i in range(DURATION):
-#     p.stepSimulation()
-#     # Simulations step-rate
-#     time.sleep(STEP_RATE/8)
-
+    return field_data, p.disconnect()

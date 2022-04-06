@@ -1,112 +1,95 @@
 import math
-import random
-
+import input
 import physics as p
-
-cochonnet_radius = 0.2
-ball_radius = 0.4
-dirrections = [(-1, 0.3, 1.6), (-0.8, 0, 1.6), (-1, 2, 1)]
-power = 200
-start_position = (0, 0, 1)
-balls_in_round = 1
-rounds_in_game = 3
-
-
-class Round:
-    def __init__(self, number, leader, balls=balls_in_round):
-        self.number = number
-        self.leader = leader
-        self.score = {'team_1': 0, 'team_2': 0}
-        self.field = {}
-        self.balls = []
-        for ball in range(balls):
-            self.balls.append(Ball(1))
-            self.balls.append(Ball(2))
-
-    def get_score(self):
-        for ball in self.balls:
-            distance = math.dist(ball.place, ball_cochonnet.place)
-            if ball.team == 1:
-                print('ok')
-                self.score['team_1'] += distance
-            if ball.team == 2:
-                self.score['team_2'] += distance
-
-            return self.score
-
-
-    def clean_field(self):
-
-        for ball in self.balls:
-            p.p.removeBody(ball.id)
-        return True
+from setup import *
 
 
 class Ball:
-    def __init__(self, team, start_pos=start_position, scale=ball_radius, id=0):
+    def __init__(self, team, start_pos=START_POSITION, scale=BALL_RADIUS, id=0):
         self.id = id
         self.place = (start_pos[0], start_pos[1], start_pos[2])
         self.team = team
         self.scale = scale
 
 
-def ran_dir(x,y,z):
-    dir = (x * random.uniform(0.98, 1.2), y * random.uniform(0.98, 1.2), z * random.uniform(0.98, 1.2))
-    return dir
+class Round:
+    def __init__(self, number, leader=1, balls=BALLS_IN_ROUND):
+        self.number = number
+        self.leader = leader
+        self.score = {'team_1': 0, 'team_2': 0}
+        self.field = {}
+        ball_cochonnet = Ball(leader, scale=COCHONNET_RADIUS)
+        self.balls = [ball_cochonnet]
+        order = [1,2] if not bool(leader - 1) else [2,1]
+        for ball in range(balls):
+            self.balls.append(Ball(order[0]))
+            self.balls.append(Ball(order[1]))
+
+    def ball_measurements(self):
+        for ball in self.balls[1:]:
+            distance = math.dist(self.field[ball.id], self.field[1])
+            if ball.team == 1:
+                self.score['team_1'] += distance
+            if ball.team == 2:
+                self.score['team_2'] += distance
+
+        return self.score
+
+    def balls_flinging(self):
+        for ball in self.balls:
+            # Load before fling round field
+            p.load_world(self.field)  # simulation
+
+            # Create ball and get ball.id
+            ball.id = p.load_object(ball.place, ball.scale)  # simulation
+            print(f'ball.id = {ball.id}')
+
+            # Take fling direction
+            if ball.id != 1:
+                direction = input.get_deviation_from_cachonnet(INPUT_MODE, self.field[1])
+            else:
+                direction = input.random_cochonnete_vector()
+
+            # fling this ball and get after fling round field
+            self.field, disconnect = p.fling_ball_simulation(ball.id, direction)  # simulation
+
+        return self.ball_measurements()
 
 
-def get_winner():
-    return 'team_1' if game_score['team_1'] > game_score['team_2'] else 'team_2'
+class Game:
+    def __init__(self, rounds_in_game=ROUNDS_IN_GAME):
+        self.score = {'team_1': 0, 'team_2': 0}
+        self.rounds = []
+        for i in range(rounds_in_game):
+            self.rounds.append(Round(i))
 
-all_game = []
-game_score = {'team_1': 0, 'team_2': 0}
-for n in range(rounds_in_game):
-    round = Round(n, 1)
-    dirrection = ran_dir(-0.8, 0.6, 1.6)
-    ball_cochonnet = Ball(1, scale=cochonnet_radius)
-    ball_cochonnet.place = p.fling_ball_simulation(ball_cochonnet, dirrection, power)
-    round.field.update({ball_cochonnet.id: ball_cochonnet.place})
+    def get_game_score(self, round: Round):
+        self.score['team_1'] += 1 if round.score['team_1'] < round.score['team_2'] else 0
+        self.score['team_2'] += 1 if round.score['team_1'] > round.score['team_2'] else 0
+        return self.score
 
-    for ball in round.balls:
-        dirrection = ran_dir(-0.8, 0.6, 1.6)
-        ball.place = p.fling_ball_simulation(ball, dirrection, power)
-        round.field.update({ball.id: ball.place})
+    def get_current_game_leader(self):
+        return 1 if self.score['team_1'] < self.score['team_2'] else 2
 
-        distance = math.dist(ball.place, ball_cochonnet.place)
-        print(distance)
-        if ball.team == 1:
-            round.score['team_1'] += distance
-        if ball.team == 2:
-            round.score['team_2'] += distance
+    def get_winner(self):
+        t_1_score = self.score['team_1']
+        t_2_score = self.score['team_2']
+        if t_1_score > t_2_score:
+            return 'team_1'
+        elif t_1_score < t_2_score:
+            return 'team_2'
+        else:
+            return 'equal'
 
-    game_score['team_1'] += round.score['team_1']
-    game_score['team_2'] += round.score['team_2']
-    all_game.append(round)
-    round.clean_field()
-    p.p.removeBody(ball_cochonnet.id)
+    def play(self):
+        for this_round in self.rounds:
+            this_round.leader = self.get_current_game_leader()
+            this_round.score = this_round.balls_flinging()
+            self.score = self.get_game_score(this_round)
 
-    # print(ball.place)
-    # print(ball.team)
-
-print(f'winner is {get_winner()}')
+        return self.get_winner(), self.score
 
 
+game = Game()
 
-
-
-# ball_1.fling_ball(dirrection, power)
-# round_1.ball_flings()
-# round_1.get_score()
-
-
-# def input(player_id: int, x, y, z, power):
-#     pass
-#
-# def get_score():
-#     pass
-#
-# def load_fling():
-#     pass
-
-# def simulate_fling(pointer, power):
-#     return location_data
+print(game.play())
