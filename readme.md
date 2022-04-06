@@ -1,5 +1,7 @@
 1. `pip install -r requirements.txt`
-2. `ball_hits_ball_scratch.py`
-3. aim  with `arrow keys`
-4. hit  with `space`
-5. quit with `q`
+2. configure balls in round, rounds in game and input mode `setup.py`
+3. `game.py` to play game
+4. cochonnet is to be thrown automatic
+5. `console` input mode takes(-12,12) as dirrection and (0,10) as power
+
+
