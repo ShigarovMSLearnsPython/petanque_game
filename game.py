@@ -1,7 +1,16 @@
+
 import math
 import input
 import physics as p
 from setup import *
+
+
+# returns str with team from the top of score_board, if it beats second one
+def get_winner(board: dict[str, int]) -> str:
+    if board[list(board)[0]] > board[list(board)[1]]:
+        return f'{board[list(board)[0]]}'
+    else:
+        return f'equality'
 
 
 class Ball:
@@ -13,81 +22,94 @@ class Ball:
 
 
 class Round:
-    def __init__(self, number, leader=1, balls=BALLS_IN_ROUND):
+    def __init__(self, number: int):
         self.number = number
-        self.leader = leader
-        self.score = {'team_1': 0, 'team_2': 0}
-        self.field = {}
-        ball_cochonnet = Ball(leader, scale=COCHONNET_RADIUS)
-        self.balls = [ball_cochonnet]
-        order = [1,2] if not bool(leader - 1) else [2,1]
-        for ball in range(balls):
-            self.balls.append(Ball(order[0]))
-            self.balls.append(Ball(order[1]))
 
-    def ball_measurements(self):
+        self.score = {}  # dict[int: int]
+        for i in range(NUMBER_OF_PLAYERS):
+            self.score.update({(i+1): 0})
+
+        self.field = {}  # dict[int: tupple(float, float, float)]
+        self.cochonnet = Ball(scale=COCHONNET_RADIUS)
+        self.balls = [self.cochonnet]
+
+    # mesures distances sum of teams balls to cocho and writes them down
+    def distance_to_cocho_measurements(self) -> dict[int, int]:
         for ball in self.balls[1:]:
             distance = math.dist(self.field[ball.id], self.field[1])
-            if ball.team == 1:
-                self.score['team_1'] += distance
-            if ball.team == 2:
-                self.score['team_2'] += distance
+            self.score[ball.team] += distance
 
         return self.score
 
-    def balls_flinging(self):
+    # takes fling direction in dependency of ball scale and input type
+    def get_fling_direction(self, ball_scale):
+        if ball_scale != COCHONNET_RADIUS:
+            # for all balls. In this situation cochonnet is already flinged and we use its place to dirrect
+            cochonnet_place = self.field[1]
+            return input.get_fling_vector(INPUT_MODE, cochonnet_place)
+        else:
+            # for cochonnet. fling it with random vector
+            return input.random_cochonnete_vector()
+
+    # plays round and gets its score
+    def play(self) -> dict[int, int]:
         for ball in self.balls:
-            # Load before fling round field
-            p.load_world(self.field)  # simulation
 
-            # Create ball and get ball.id
-            ball.id = p.load_object(ball.place, ball.scale)  # simulation
-            print(f'ball.id = {ball.id}')
+            # create ball in physics and get unique ball.id
+            ball.id = p.create_ball(ball.place, ball.scale)  # simulation
 
-            # Take fling direction
-            if ball.id != 1:
-                direction = input.get_deviation_from_cachonnet(INPUT_MODE, self.field[1])
-            else:
-                direction = input.random_cochonnete_vector()
+            # get direction of the fling
+            direction = self.get_fling_direction(ball.scale)
 
             # fling this ball and get after fling round field
-            self.field, disconnect = p.fling_ball_simulation(ball.id, direction)  # simulation
+            self.field = p.fling_ball_simulation(ball.id, direction, self.number)  # simulation
 
-        return self.ball_measurements()
+        return self.distance_to_cocho_measurements()
 
 
 class Game:
-    def __init__(self, rounds_in_game=ROUNDS_IN_GAME):
-        self.score = {'team_1': 0, 'team_2': 0}
+    def __init__(self, number_of_players=NUMBER_OF_PLAYERS, rounds_in_game=ROUNDS_IN_GAME):
+        self.score = {}
+        for i in range(number_of_players):
+            self.score.update({i+1: 0})
         self.rounds = []
         for i in range(rounds_in_game):
-            self.rounds.append(Round(i))
+            self.rounds.append(Round(i+1))
 
-    def get_game_score(self, round: Round):
-        self.score['team_1'] += 1 if round.score['team_1'] < round.score['team_2'] else 0
-        self.score['team_2'] += 1 if round.score['team_1'] > round.score['team_2'] else 0
+    # writes down to GAME score according to round score
+    def record_game_score(self, round_score: dict[int, int]) -> dict[int, int]:
+        round_winner = sorted(round_score, key=round_score.get, reverse=True)[0]
+        self.score[round_winner] += 1
         return self.score
 
-    def get_current_game_leader(self):
-        return 1 if self.score['team_1'] < self.score['team_2'] else 2
+    # charges all balls for round according to current game leader
+    def append_teams_balls_in_round_by_order(self, round: Round):
+        order = sorted(self.score, key=self.score.get, reverse=True)
+        for team_number in order * BALLS_IN_ROUND:
+            round.balls.append(Ball(team_number))
 
-    def get_winner(self):
-        t_1_score = self.score['team_1']
-        t_2_score = self.score['team_2']
-        if t_1_score > t_2_score:
-            return 'team_1'
-        elif t_1_score < t_2_score:
-            return 'team_2'
-        else:
-            return 'equal'
+    # returns ordered by score game board
+    def get_score_board(self) -> dict[str: int]:
+        board = {}
+        for key in sorted(self.score, reverse=True):
+            board.update({f'team {key}': self.score[key]})
+        return board
 
-    def play(self):
+    def play(self) -> dict[str: int]:
+        p.load_world()
+
         for this_round in self.rounds:
-            this_round.leader = self.get_current_game_leader()
-            this_round.score = this_round.balls_flinging()
-            self.score = self.get_game_score(this_round)
+            self.append_teams_balls_in_round_by_order(this_round)
+            this_round.score = this_round.play()
+            self.score = self.record_game_score(this_round.score)
+            p.clean_balls()
 
-        return self.get_winner(), self.score
+        p.disconnect()
+
+        board = self.get_score_board()
+        winner = f'{get_winner(board)}'
+
+        return board, f'{winner} is the winner'
 
 
 game = Game()
