@@ -78,4 +78,3 @@ def get_fling_power(mode):
     # random input
     elif mode == 'random':
         return RANDOM_POWER()
-
