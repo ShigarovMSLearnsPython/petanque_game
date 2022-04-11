@@ -5,16 +5,18 @@ import physics as p
 from setup import *
 
 
+
+
 # returns str with team from the top of score_board, if it beats second one
-def get_winner(board: dict[str, int]) -> str:
-    if board[list(board)[0]] > board[list(board)[1]]:
-        return f'{board[list(board)[0]]}'
+def get_winner(first_line: tuple, second_line: tuple) -> str:
+    if first_line[1] > second_line[1]:
+        return f'{first_line[0]}'
     else:
         return f'equality'
 
 
 class Ball:
-    def __init__(self, team, start_pos=START_POSITION, scale=BALL_RADIUS, id=0):
+    def __init__(self, team=0, start_pos=START_POSITION, scale=BALL_RADIUS, id=0):
         self.id = id
         self.place = (start_pos[0], start_pos[1], start_pos[2])
         self.team = team
@@ -78,21 +80,22 @@ class Game:
 
     # writes down to GAME score according to round score
     def record_game_score(self, round_score: dict[int, int]) -> dict[int, int]:
-        round_winner = sorted(round_score, key=round_score.get, reverse=True)[0]
+        round_winner = sorted(round_score, key=round_score.get)[0]
         self.score[round_winner] += 1
         return self.score
 
     # charges all balls for round according to current game leader
     def append_teams_balls_in_round_by_order(self, round: Round):
         order = sorted(self.score, key=self.score.get, reverse=True)
+        print(self.score)
         for team_number in order * BALLS_IN_ROUND:
             round.balls.append(Ball(team_number))
 
     # returns ordered by score game board
     def get_score_board(self) -> dict[str: int]:
-        board = {}
-        for key in sorted(self.score, reverse=True):
-            board.update({f'team {key}': self.score[key]})
+        board = []
+        for key in sorted(self.score, key=self.score.get, reverse=True):
+            board.append((f'team {key}', self.score[key]))
         return board
 
     def play(self) -> dict[str: int]:
@@ -107,7 +110,7 @@ class Game:
         p.disconnect()
 
         board = self.get_score_board()
-        winner = f'{get_winner(board)}'
+        winner = f'{get_winner(board[0], board[1])}'
 
         return board, f'{winner} is the winner'
 
