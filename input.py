@@ -35,10 +35,6 @@ def get_fling_vector(mode, cochonnet_place: tuple[float, float, float]) -> tuple
         div = float(input('Choose the angle from cochonnetwise (-12: left, 0: straght, 12: right): '))
         # div should be -13 < x < 13
         div = cut_input_by_range(div, -12, 12)
-        # if div >= 13:
-        #     div = 12
-        # elif div <= -13:
-        #     div = -12
 
         power = get_fling_power(mode) / 12
         x_fling = (x_coch - 0.6 * div) * power

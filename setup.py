@@ -12,15 +12,15 @@ def RANDOM_POWER(): return randint(4,7)
 def RANDOM_DIRECTION(): return randint(-4,4)
 
 
-STEP_RATE = 1/160.  # one spep lenght in seconds
-DURATION = 1200     # steps of simulation with given STEP_RATE
+STEP_RATE = 1/240.  # one spep lenght in seconds
+DURATION = 2200     # steps of simulation with given STEP_RATE
 TIME_BEFORE_FLING = 0.6
 
 COCHONNET_RADIUS = 0.2
 BALL_RADIUS = 0.4
 
 BALL_MASS = 0.33
-BALL_BOUNCENES = 0.8
+BALL_BOUNCENES = 0.6
 
 PLANE_BOUNCENESS = 0.65
 PLANE_LAT_FRIC = 0.2

@@ -1,10 +1,11 @@
-
+import logging
 import math
 import input
 import physics as p
 from setup import *
 
 
+logging.basicConfig(level=logging.INFO)
 
 
 # returns str with team from the top of score_board, if it beats second one
@@ -16,24 +17,25 @@ def get_winner(first_line: tuple, second_line: tuple) -> str:
 
 
 class Ball:
-    def __init__(self, team=0, start_pos=START_POSITION, scale=BALL_RADIUS, id=0):
+    def __init__(self, team=0, is_cochonnet=False, start_pos=START_POSITION, scale=BALL_RADIUS, id=0):
         self.id = id
         self.place = (start_pos[0], start_pos[1], start_pos[2])
         self.team = team
         self.scale = scale
+        self.is_cochonnet = is_cochonnet
+        if is_cochonnet:
+            self.scale = COCHONNET_RADIUS
 
 
 class Round:
     def __init__(self, number: int):
-        self.number = number
+        self.number= number
 
-        self.score = {}  # dict[int: int]
-        for i in range(NUMBER_OF_PLAYERS):
-            self.score.update({(i+1): 0})
+        self.score: dict[int: int] = {key: 0 for key in range(1, NUMBER_OF_PLAYERS+1)}
 
-        self.field = {}  # dict[int: tupple(float, float, float)]
-        self.cochonnet = Ball(scale=COCHONNET_RADIUS)
-        self.balls = [self.cochonnet]
+        self.field: dict[int: tuple[float, float, float]] = {}
+
+        self.balls: list[Ball] = [Ball(is_cochonnet=True)]
 
     # mesures distances sum of teams balls to cocho and writes them down
     def distance_to_cocho_measurements(self) -> dict[int, int]:
@@ -41,11 +43,12 @@ class Round:
             distance = math.dist(self.field[ball.id], self.field[1])
             self.score[ball.team] += distance
 
+        logging.info(f'Summed distances are {self.score}')
         return self.score
 
     # takes fling direction in dependency of ball scale and input type
-    def get_fling_direction(self, ball_scale):
-        if ball_scale != COCHONNET_RADIUS:
+    def get_fling_direction(self, ball: Ball):
+        if not ball.is_cochonnet:
             # for all balls. In this situation cochonnet is already flinged and we use its place to dirrect
             cochonnet_place = self.field[1]
             return input.get_fling_vector(INPUT_MODE, cochonnet_place)
@@ -61,22 +64,22 @@ class Round:
             ball.id = p.create_ball(ball.place, ball.scale)  # simulation
 
             # get direction of the fling
-            direction = self.get_fling_direction(ball.scale)
+            direction = self.get_fling_direction(ball)
 
             # fling this ball and get after fling round field
             self.field = p.fling_ball_simulation(ball.id, direction, self.number)  # simulation
+            logging.info('Balls on field coordinates = ' + f'{self.field}')
+
+            logging.info(f'Team {ball.team} has flunged ball {ball.id}')
 
         return self.distance_to_cocho_measurements()
 
 
 class Game:
     def __init__(self, number_of_players=NUMBER_OF_PLAYERS, rounds_in_game=ROUNDS_IN_GAME):
-        self.score = {}
-        for i in range(number_of_players):
-            self.score.update({i+1: 0})
-        self.rounds = []
-        for i in range(rounds_in_game):
-            self.rounds.append(Round(i+1))
+        self.score = {i+1: 0 for i in range(number_of_players)}
+        self.rounds = [Round(i+1) for i in range(rounds_in_game)]
+        self.in_progress = True
 
     # writes down to GAME score according to round score
     def record_game_score(self, round_score: dict[int, int]) -> dict[int, int]:
@@ -87,7 +90,7 @@ class Game:
     # charges all balls for round according to current game leader
     def append_teams_balls_in_round_by_order(self, round: Round):
         order = sorted(self.score, key=self.score.get, reverse=True)
-        print(self.score)
+        logging.info(f'The score is {self.score}')
         for team_number in order * BALLS_IN_ROUND:
             round.balls.append(Ball(team_number))
 
@@ -112,9 +115,14 @@ class Game:
         board = self.get_score_board()
         winner = f'{get_winner(board[0], board[1])}'
 
-        return board, f'{winner} is the winner'
+        for rec in board:
+            logging.info(f'{rec[0]}: {rec[1]}')
+        logging.info(f'\nAaand {winner} is the winner!')
+
+        self.in_progress = False
+        # return board, f'{winner} is the winner'
 
 
 game = Game()
 
-print(game.play())
+game.play()
