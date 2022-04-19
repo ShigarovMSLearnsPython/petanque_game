@@ -3,7 +3,7 @@ import logging
 import pybullet as p
 from time import sleep
 import pybullet_data
-from setup import *
+from flask_server.setup import *
 
 
 # Loads ball and its physic specs
@@ -15,7 +15,7 @@ def create_ball(place, scale):
 
 # Loads world with horisontal plane and gravity
 def load_world():
-    physicsClient = p.connect(p.GUI)  # or p.DIRECT for non-graphical version
+    physicsClient = p.connect(p.DIRECT)  # or p.GUI for graphical version
     p.setAdditionalSearchPath(pybullet_data.getDataPath())  # optionally
     print("data path: %s " % pybullet_data.getDataPath())
 

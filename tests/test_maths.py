@@ -1,8 +1,4 @@
-from maths import Point , Ellipse
-
-# content of test_sample.py
-def inc(x):
-    return x + 1
+from scratches.maths import Point, Ellipse
 
 
 def test_is_point_inside():

@@ -1,8 +1,8 @@
 import logging
 import math
-import input
-import physics as p
-from setup import *
+import flask_server.input as input
+import flask_server.physics as p
+from flask_server.setup import *
 
 
 logging.basicConfig(level=logging.INFO)
@@ -14,6 +14,14 @@ def get_winner(first_line: tuple, second_line: tuple) -> str:
         return f'{first_line[0]}'
     else:
         return f'equality'
+
+
+class Player:
+    def __init__(self, id, nickname='anonymous', ready_for_the_game=0, on_line=True):
+        self.id = id
+        self.nickname = nickname
+        self.ready_for_the_game = ready_for_the_game
+        self.on_line = on_line
 
 
 class Ball:
@@ -68,16 +76,19 @@ class Round:
 
             # fling this ball and get after fling round field
             self.field = p.fling_ball_simulation(ball.id, direction, self.number)  # simulation
-            logging.info('Balls on field coordinates = ' + f'{self.field}')
+            field_2D = {p: self.field[p][:-1] for p in self.field}
+            logging.info('\nBalls on field coordinates : ' + f'\n{field_2D}')
 
-            logging.info(f'Team {ball.team} has flunged ball {ball.id}')
+            logging.info(f'\nTeam {ball.team} has flung the ball {ball.id}')
 
         return self.distance_to_cocho_measurements()
 
 
 class Game:
-    def __init__(self, number_of_players=NUMBER_OF_PLAYERS, rounds_in_game=ROUNDS_IN_GAME):
-        self.score = {i+1: 0 for i in range(number_of_players)}
+    # def __init__(self, number_of_players=NUMBER_OF_PLAYERS, rounds_in_game=ROUNDS_IN_GAME):
+    def __init__(self, id, players: list[Player], rounds_in_game=ROUNDS_IN_GAME):
+        self.id = id
+        self.score = {i+1: 0 for i in range(len(players))}
         self.rounds = [Round(i+1) for i in range(rounds_in_game)]
         self.in_progress = True
 
@@ -102,6 +113,8 @@ class Game:
         return board
 
     def play(self) -> dict[str: int]:
+        self.in_progress = True
+
         p.load_world()
 
         for this_round in self.rounds:
@@ -120,9 +133,3 @@ class Game:
         logging.info(f'\nAaand {winner} is the winner!')
 
         self.in_progress = False
-        # return board, f'{winner} is the winner'
-
-
-game = Game()
-
-game.play()

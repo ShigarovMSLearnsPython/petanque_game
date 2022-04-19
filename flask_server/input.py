@@ -1,5 +1,5 @@
 from random import uniform
-from setup import *
+from flask_server.setup import *
 
 # auto vector for first fling
 def random_cochonnete_vector():

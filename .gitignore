@@ -1,6 +1,6 @@
 
 .idea
 p5js
+.pytest_cache
 
-
-ball_hits_ball_scratch.py
+scratches/ball_hits_ball_scratch.py

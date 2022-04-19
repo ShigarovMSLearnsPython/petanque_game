@@ -2,7 +2,7 @@ from math import pi, sin, cos
 
 
 class Point:
-    def __init__(self, x: float, y: float, z: float):
+    def __init__(self, x: float, y: float, z: float = 0):
         self.x = x
         self.y = y
         self.z = z
@@ -18,13 +18,13 @@ class Ellipse:
         return (point.x - self.centre.x)**2 / self.radius_x**2 + (point.y - self.centre.y)**2 / self.radius_y**2 <= 1
 
     def get_n_points(self, n):
-        poins_of_ellipse = []
+        points_of_ellipse = []
         step = 2*pi / n
 
         for j in range(n):
             x = self.radius_x * cos((step * j))
             y = self.radius_y * sin((step * j))
-            poins_of_ellipse.append((x, y))
+            points_of_ellipse.append((x, y))
 
-        return poins_of_ellipse
+        return points_of_ellipse
 
