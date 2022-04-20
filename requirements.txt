@@ -1,5 +1,5 @@
 matplotlib~=3.5.1
 numpy~=1.22.3
 pybullet~=3.2.2
-
 Flask~=2.1.1
+pytest~=7.1.1
